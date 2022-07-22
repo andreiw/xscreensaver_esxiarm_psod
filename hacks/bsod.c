@@ -1296,6 +1296,188 @@ vmware (Display *dpy, Window window)
   return bst;
 }
 
+static struct bsod_state *
+vmware_arm (Display *dpy, Window window)
+{
+  struct bsod_state *bst = make_bsod_state (dpy, window, "vmware-arm", "VMwareArm");
+
+  unsigned i = 2;
+  unsigned msg_row;
+  unsigned long fg = bst->fg;
+  char t_string[25];
+  time_t t_now = time(NULL);
+  unsigned long font_height = bst->font->ascent + bst->font->descent;
+
+  unsigned long psod_bg = get_pixel_resource(dpy, bst->xgwa.colormap,
+					    "vmware-arm-psod.background",
+					    "vmware-arm-psod.background");
+  unsigned long term_bg = get_pixel_resource(dpy, bst->xgwa.colormap,
+					    "vmware-arm-term.background",
+					    "vmware-arm-term.background");
+  unsigned long term_fg2 = get_pixel_resource(dpy, bst->xgwa.colormap,
+					     "vmware-arm-term.foreground2",
+					     "vmware-arm-term.foreground2");
+  unsigned long term_fg3 = get_pixel_resource(dpy, bst->xgwa.colormap,
+					     "vmware-arm-term.foreground3",
+					     "vmware-arm-term.foreground3");
+  unsigned long dbg_bg = get_pixel_resource(dpy, bst->xgwa.colormap,
+					    "vmware-arm-dbg.background",
+					    "vmware-arm-dbg.background");
+  unsigned long dbg_fg = get_pixel_resource(dpy, bst->xgwa.colormap,
+					    "vmware-arm-dbg.foreground",
+					    "vmware-arm-dbg.foreground");
+  unsigned long fg2 = get_pixel_resource (dpy, bst->xgwa.colormap,
+                                          "vmware-arm.foreground2",
+                                          "vmware-arm.foreground2");
+
+  BSOD_WRAP (bst);
+  BSOD_MARGINS(bst, 0, 0);
+  BSOD_VERT_MARGINS(bst, 0, 0);
+
+  /*
+   * statusterm.
+   */
+  BSOD_TRUNCATE(bst);
+  BSOD_COLOR (bst, term_bg, fg);
+  BSOD_RECT (bst, True, 0, 0, bst->xgwa.width, bst->xgwa.height);
+  BSOD_MOVETO(bst, 0, font_height * 6);
+  BSOD_COLOR (bst, fg, term_bg);
+  BSOD_TEXT (bst, LEFT, "                VMware ESXi 7.0.0 (VMKernel Release Build 19076756)");
+  BSOD_MOVETO(bst, 0, font_height * 8);
+  BSOD_COLOR (bst, fg, term_bg);
+  BSOD_TEXT (bst, LEFT, "                PINE64 Quartz64 Model A");
+  BSOD_MOVETO(bst, 0, font_height * 10);
+  BSOD_COLOR (bst, term_fg2, term_bg);
+  BSOD_TEXT (bst, LEFT, "                ARM Limited Cortex-A55 r2p0");
+  BSOD_MOVETO(bst, 0, font_height * 11);
+  BSOD_COLOR (bst, term_fg2, term_bg);
+  BSOD_TEXT (bst, LEFT, "                7.7 GiB Memory");
+
+  msg_row = 1 + (bst->xgwa.height / (font_height * 2));
+  if (msg_row > 11) {
+    BSOD_WRAP(bst);
+    BSOD_MOVETO(bst, 0, font_height * msg_row);
+    BSOD_COLOR (bst, term_fg3, term_bg);
+    strftime(t_string, sizeof(t_string), "%Y-%m-%dT%H:%M:%S.000Z", localtime(&t_now));
+    BSOD_TEXT (bst, LEFT, t_string);
+    BSOD_TEXT (bst, LEFT, " cpu0:65802)Failed to verify signatures of the following vib(s): [bnxtnet bnxtroce brcmfcoe brcmnvmefc elx-esx-libelxima.so eslxiscsi elxnet ena esx base esx-dvfilter-generic-fastpath esx-ui esx-update i40en i40iwn iavmd igbn iser$");
+  }
+
+  BSOD_PAUSE (bst, 10000000);
+
+  /*
+   * Now the PSOD.
+   */
+  BSOD_TRUNCATE(bst);
+  BSOD_COLOR (bst, psod_bg, fg);
+  BSOD_RECT (bst, True, 0, 0, bst->xgwa.width, bst->xgwa.height);
+  BSOD_MOVETO(bst, 0, bst->font->ascent);
+  BSOD_COLOR (bst, fg2, psod_bg);
+  BSOD_TEXT   (bst, LEFT,
+		"VMware ESX 7.0.0 [Releasebuild-19076756 aarch64]\n");
+  BSOD_COLOR (bst, fg, psod_bg);
+  BSOD_LINE_DELAY (bst, 1000);
+  BSOD_TEXT   (bst, LEFT,
+	        "EXCVEC_CUREL_SP_EL0_SYNCH Exception 0 in world 131126:HELPER_UPLIN (ec 0x25 il 1 iss 0x47 far_el1 0x315d3541b8 far_el2 0x4501843b1000)"
+	        "\nTTB=0x12ade8000"
+	        "\nCurrentEL=2 SP_EL0 DAIF"
+	        "\nSCTLR_EL2=0x30c0180d sa0 SA C a M"
+	        "\n[ 0]     4501843b0000 [ 1]                0 [ 2]             1000 [ 3]     4501843b1000"
+	        "\n[ 4]     451a01b1be20 [ 5]                0 [ 6]     4305be607a5a [ 7]     4200400001c0"
+	        "\n[ 8]                0 [ 9]     451a01b1be20 [10]                1 [11]                1"
+	        "\n[12]         ffffed40 [13]     420040000080 [14]     41fffa5d7000 [15]     41fffa5d7c20"
+	        "\n[16]                1 [17]                4 [18]     41fffa5d7c08 [19]     451a01b1be70"
+	        "\n[20]     43024240b680 [21]     4305be601900 [22]     4305be6012c0 [23]     41ffd0c00000"
+	        "\n[24]     4305be601220 [25]          bad0001 [26]                0 [27]     43006fc01220"
+	        "\n[28]     4303d5001220 [29]                0 [30]     42003b3ceb6c"
+	        "\n[pc]     42003a344d54 [sp]     451a01b1bdd0 [psr]        20000248"
+	        "\n*PCPU0:131126/HELPER_UPLINK_ASYNC_CALL_QUEUE"
+	        "\nPCPU  0: SUUU"
+	        "\nCode start: 0x42003a200000 VMK uptime: 0:00:05:35.425"
+	        "\n0x451a01b1bdd0:[0x42003a344d54]vmk_Memset@vmkernel#nover+0x28 stack: 0x42003b3cfa48"
+	        "\n0x451a01b1bdd0:[0x42003b3ceb68]EQOSEnable@(eqos)#<None>+0xe0 stack: 0x42003b3cfa48"
+	        "\n0x451a01b1be20:[0x42003b3c9220]SETHUplAssociate@(eqos)#<None>+0x88 stack: 0x43024240b680"
+	        "\n0x451a01b1be80:[0x42003a48a078]UplinkDeviceAssociateAsyncCB@vmkernel#nover+0x50 stack: 0x43024240bb08"
+	        "\n0x451a01b1bed0:[0x42003a555a6c]UplinkAsyncProcessCallsHelperCB@vmkernel#nover+0x12c stack: 0x451a01b21000"
+	        "\n0x451a01b1bf20:[0x42003a2fd510]HelperQueueFunc@vmkernel#nover+0x174 stack: 0x451a01b21100"
+	        "\n0x451a01b1bfe0:[0x42003a59e4fc]CpuSched_StartWorld@vmkernel#nover+0x70 stack: 0x0"
+	        "\n0x451a01b1c000:[0x42003a5ec610]CpuSched_UseMwaitCallback@vmkernel#nover+0x8 stack: 0x0"
+	        "\nNo place on disk to dump data."
+	        "\nCoredump to file: /vmfs/volumes/3a4fcb25-5f6ca096-c940-70886b86100c/vmkdump/00000000-0000-0000-0000-000000000000.dumpfile."
+ 	        "\nFaulting world regs (01/15)");
+  BSOD_PAUSE (bst, 300000);
+  BSOD_TEXT (bst, LEFT, "\nVmm code/data (02/15)");
+  BSOD_PAUSE (bst, 300000);
+  BSOD_TEXT (bst, LEFT,  "\nVmk code/rodata/stack (03/15)");
+  BSOD_PAUSE (bst, 300000);
+  BSOD_TEXT (bst, LEFT, "\nVmk data/heap (04/15)");
+  BSOD_PAUSE (bst, 300000);
+  BSOD_TEXT (bst, LEFT, "\nPCPU (05/15)");
+  BSOD_PAUSE (bst, 300000);
+  BSOD_TEXT (bst, LEFT, "\nWorld-specific data (06/15)");
+  BSOD_PAUSE (bst, 300000);
+  BSOD_TEXT (bst, LEFT, "\nVASpace (08/15)");
+  BSOD_PAUSE (bst, 1000000);
+  BSOD_TEXT (bst, LEFT,	"\nPFrame (09/15)");
+  BSOD_PAUSE (bst, 1000000);
+  BSOD_TEXT (bst, LEFT, "\nMemXferFs (11/15)");
+  BSOD_PAUSE (bst, 300000);
+  BSOD_TEXT (bst, LEFT, "\nDump Files (13/15)");
+  BSOD_PAUSE (bst, 600000);
+  BSOD_TEXT (bst, LEFT, "\nCollecting userworld dumps (14/15)");
+  BSOD_PAUSE (bst, 600000);
+  BSOD_TEXT (bst, LEFT, "\nFinalized dump header (15/15) FileDump: Successful.");
+  BSOD_PAUSE (bst, 10000);
+  BSOD_TEXT (bst, LEFT, "\nNo port for remote debugger. Press \"Escape\" for local debugger.");
+  BSOD_PAUSE (bst, 1000000);
+
+  /*
+   * Local debugger.
+   */
+  BSOD_COLOR (bst, dbg_bg, dbg_fg);
+  BSOD_RECT (bst, True, 0, 0, bst->xgwa.width, bst->xgwa.height);
+  BSOD_MOVETO(bst, 0, bst->font->ascent);
+  BSOD_TEXT (bst, LEFT, "vmkernel debugger (h for help)");
+  BSOD_RECT (bst, True, 0, bst->font->ascent + bst->font->descent / 2,
+	     bst->xgwa.width, bst->font->ascent);
+  BSOD_COLOR (bst, dbg_fg, dbg_bg);
+  BSOD_TEXT (bst, LEFT, "\n[PCPU2] VMKDBG> _");
+  while (i--) {
+    BSOD_PAUSE (bst, 1000000);
+    BSOD_TEXT (bst, LEFT, "\bh_");
+    BSOD_PAUSE (bst, 10000);
+    BSOD_TEXT (bst, LEFT, "\b \nh       : help"
+	       "\nreboot  : reboot"
+	       "\nlivedump: Create live coredump without crashing system"
+	       "\nl       : display vmkernel log"
+	       "\np       : display content of symbol"
+	       "\ns       : display storage dump+boot info"
+	       "\nx       : display 32-bit content of address"
+	       "\nx/N     : display N bytes of content at address"
+	       "\ng port  : bind remote debugger to port (com1 or com2)"
+	       "\nbt N    : show backtrace for CPU N"
+	       "\nq       : quit debug terminal"
+	       "\n[PCPU2] VMKDBG> _");
+  }
+  BSOD_PAUSE (bst, 100000);
+  BSOD_TEXT (bst, LEFT, "\bre_");
+  BSOD_PAUSE (bst, 500000);
+  BSOD_TEXT (bst, LEFT, "\bb_");
+  BSOD_PAUSE (bst, 50000);
+  BSOD_TEXT (bst, LEFT, "\bo_");
+  BSOD_PAUSE (bst, 50000);
+  BSOD_TEXT (bst, LEFT, "\bo_");
+  BSOD_PAUSE (bst, 50000);
+  BSOD_TEXT (bst, LEFT, "\bt_");
+  BSOD_PAUSE (bst, 2000000);
+  BSOD_COLOR (bst, dbg_bg, dbg_fg);
+  BSOD_RECT (bst, True, 0, 0, bst->xgwa.width, bst->xgwa.height);
+  BSOD_PAUSE (bst, 1000000);
+
+  XClearWindow (dpy, window);
+  return bst;
+}
+
 
 /* Windows NT 3.1 - 4.0
  */
@@ -6489,6 +6671,7 @@ static const struct {
   { "GLaDOS",		glados },
   { "Android",		android },
   { "VMware",		vmware },
+  { "VMwareArm",	vmware_arm },
   { "Encom",		encom },
   { "DVD",		dvd },
   { "Tivo",		tivo },
@@ -6814,6 +6997,7 @@ static const char *bsod_defaults [] = {
   "*doGLaDOS:		   True",
   "*doAndroid:		   False",
   "*doVMware:		   True",
+  "*doVMwareArm:	   True",
   "*doEncom:		   True",
   "*doDVD:		   True",
   "*doTivo:		   True",
@@ -6930,6 +7114,16 @@ static const char *bsod_defaults [] = {
   ".vmware.foreground2:	   Yellow",
   ".vmware.background:	   #a700a8",    /* purple */
 
+  ".vmware-arm.foreground:  White",
+  ".vmware-arm.foreground2: Yellow",
+  ".vmware-arm.background:  #555555",
+  ".vmware-arm-psod.background:  #a700a8",
+  ".vmware-arm-dbg.background: #000000",
+  ".vmware-arm-dbg.foreground: #ababab",
+  ".vmware-arm-term.background: #555555",
+  ".vmware-arm-term.foreground2: #aaaaaa",
+  ".vmware-arm-term.foreground3: #ff5757",
+
   ".tivo.background:	   #339020",
   ".tivo.foreground:	   #B8E6BA",
 
@@ -7009,6 +7203,9 @@ static const char *bsod_defaults [] = {
   ".gnome.font:		Helvetica Bold 13",
   ".gnome.bigFont:	Helvetica Bold 13",
   ".gnome.fontB:	Helvetica 13",
+
+  ".vmware-arm.font:		Classic Console 12, Courier Bold 10",
+  ".vmware-arm.bigFont:		Classic Console 24, Courier Bold 12",
   0
 };
 
@@ -7078,6 +7275,8 @@ static const XrmOptionDescRec bsod_options [] = {
   { "-no-android",	".doAndroid",		XrmoptionNoArg,  "False" },
   { "-vmware",		".doVMware",		XrmoptionNoArg,  "True"  },
   { "-no-vmware",	".doVMware",		XrmoptionNoArg,  "False" },
+  { "-vmware-arm",	".doVMwareArm",		XrmoptionNoArg,  "True"  },
+  { "-no-vmware-arm",	".doVMwareArm",		XrmoptionNoArg,  "False" },
   { "-encom",		".doEncom",		XrmoptionNoArg,  "True"  },
   { "-no-encom",	".doEncom",		XrmoptionNoArg,  "False" },
   { "-dvd",		".doDVD",		XrmoptionNoArg,  "True"  },
